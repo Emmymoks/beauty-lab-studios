@@ -230,7 +230,9 @@ export default function Contact() {
             />
           </label>
 
-          <button className="inline-block px-6 py-3 border rounded-full hover:bg-gray-100 transition">
+          <button
+            className="inline-block px-6 py-3 rounded-full bg-softgold text-white font-medium hover:scale-105 transition-transform"
+          >
             Reserve Your Date
           </button>
         </form>
