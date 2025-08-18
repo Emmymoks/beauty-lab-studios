@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 
 const IMAGES = [
   { src: "/2692.jpg" },
@@ -24,7 +24,47 @@ const IMAGES = [
 ]
 
 export default function Gallery() {
-  const [selectedImage, setSelectedImage] = useState(null)
+  const [currentIndex, setCurrentIndex] = useState(null)
+  const [touchStart, setTouchStart] = useState(0)
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) =>
+      prev === 0 ? IMAGES.length - 1 : prev - 1
+    )
+  }
+
+  const handleNext = () => {
+    setCurrentIndex((prev) =>
+      prev === IMAGES.length - 1 ? 0 : prev + 1
+    )
+  }
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (currentIndex !== null) {
+        if (e.key === "ArrowRight") handleNext()
+        if (e.key === "ArrowLeft") handlePrev()
+        if (e.key === "Escape") setCurrentIndex(null)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [currentIndex])
+
+  // Touch swipe handling
+  const handleTouchStart = (e) => {
+    setTouchStart(e.touches[0].clientX)
+  }
+
+  const handleTouchEnd = (e) => {
+    if (!touchStart) return
+    const touchEnd = e.changedTouches[0].clientX
+    const diff = touchStart - touchEnd
+    if (diff > 50) handleNext() // swipe left
+    if (diff < -50) handlePrev() // swipe right
+    setTouchStart(0)
+  }
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-12">
@@ -36,7 +76,7 @@ export default function Gallery() {
           <figure
             key={i}
             className="rounded overflow-hidden shadow-md hover:scale-105 transition-transform duration-300 cursor-pointer"
-            onClick={() => setSelectedImage(it.src)}
+            onClick={() => setCurrentIndex(i)}
           >
             <img
               src={it.src}
@@ -49,18 +89,43 @@ export default function Gallery() {
       </div>
 
       {/* Fullscreen Image Viewer */}
-      {selectedImage && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur flex items-center justify-center z-50 transition-opacity duration-500">
+      {currentIndex !== null && (
+        <div
+          className="fixed inset-0 bg-black/90 backdrop-blur flex items-center justify-center z-50 transition-opacity duration-500"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Close button */}
           <button
             className="absolute top-6 right-6 text-white text-4xl font-bold hover:scale-110 transition-transform"
-            onClick={() => setSelectedImage(null)}
+            onClick={() => setCurrentIndex(null)}
             aria-label="Close image viewer"
           >
             ✕
           </button>
+
+          {/* Prev button */}
+          <button
+            className="absolute left-6 text-white text-5xl font-bold px-2 hover:scale-110 transition-transform"
+            onClick={handlePrev}
+            aria-label="Previous image"
+          >
+            ‹
+          </button>
+
+          {/* Next button */}
+          <button
+            className="absolute right-6 text-white text-5xl font-bold px-2 hover:scale-110 transition-transform"
+            onClick={handleNext}
+            aria-label="Next image"
+          >
+            ›
+          </button>
+
+          {/* Image */}
           <img
-            src={selectedImage}
-            alt="Selected gallery item"
+            src={IMAGES[currentIndex].src}
+            alt={`Selected gallery item ${currentIndex + 1}`}
             className="max-h-[90%] max-w-[90%] rounded-lg shadow-lg transform scale-95 animate-fadeIn"
           />
         </div>
